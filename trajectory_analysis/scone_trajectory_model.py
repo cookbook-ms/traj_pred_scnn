@@ -47,7 +47,7 @@ class Scone_GCN():
         
         # raise Exception
         # cross entropy + ridge regularization
-        print(preds[1])
+        #print(preds[1])
         n_shifts = len(self.shifts)
 
         if self.model_type != 'bunch':

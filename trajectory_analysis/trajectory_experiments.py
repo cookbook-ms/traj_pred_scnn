@@ -57,11 +57,12 @@ More examples:
         -create a dataset using folder suffix no_holes, train a model over it using default settings, and test it over the graph with data folder suffix holes
 """
 import os, sys
-
-import jax.numpy as np
-from jax.scipy.special import logsumexp
 import numpy as onp
 from numpy import linalg as la
+import jax.numpy as np
+from jax.scipy.special import logsumexp
+
+
 
 
 try:
@@ -83,18 +84,18 @@ def hyperparams():
     For hidden_layers, input [(3, 8), (3, 8)] as 3_8_3_8
     """
     args = sys.argv
-    hyperparams = {'model': 'scnn2',
+    hyperparams = {'model': 'scnn3',
                    'epochs': 3,
                    'learning_rate': 0.001,
                    'weight_decay': 0.00005,
                    'batch_size': 100,
                    'hidden_layers': [(3, 16), (3, 16), (3, 16)], # where 3 indicates the 1 identity, 1 lower and 1 upper shift
-                   'k1_scnn': 2,
-                   'k2_scnn': 2,
+                   'k1_scnn': 3,
+                   'k2_scnn': 3,
                    'describe': 1,
                    'reverse': 1,
                    'load_data': 1,
-                   'load_model': 1,
+                   'load_model': 0,
                    'markov': 0,
                    'model_name': 'model',
                    'regional': 0,
