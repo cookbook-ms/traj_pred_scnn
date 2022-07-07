@@ -43,10 +43,11 @@ class Scone_GCN():
         """
         Computes cross-entropy loss per flow
         """
-        preds = self.model(weights, *self.shifts, *inputs)[mask==1]
+        preds = self.model(weights, *self.shifts, *inputs)[mask==1] # dim: (200,13,1)
+        
         # raise Exception
         # cross entropy + ridge regularization
-
+        print(preds[1])
         n_shifts = len(self.shifts)
 
         if self.model_type != 'bunch':
@@ -238,7 +239,7 @@ class Scone_GCN():
         """
         self.model_type = model_type
         n_train_samples = sum(train_mask)
-        self.shifts = shifts
+        self.shifts = shifts # assign shift matrices
         # set up model for batching
         self.model = vmap(model, in_axes=in_axes)
         self.model_single = model
@@ -248,22 +249,26 @@ class Scone_GCN():
         # in_channels = 1, out_channels=1
         self.generate_weights(in_channels, hidden_layers, out_channels)
         
-    # def setup_scnn(self, model, hidden_layers, k1, k2, shifts, inputs, y, in_axes, train_mask, model_type='scnn'):
-    #     """
-    #     Set up model for training / calling
-    #     in_axes: the keywords for vmap, for batching 
-    #     """
-    #     self.model_type = model_type
-    #     n_train_samples = sum(train_mask)
-    #     self.shifts = shifts
-    #     # set up model for batching
-    #     self.model = vmap(model, in_axes=in_axes)
-    #     self.model_single = model
-    #     # generate weights
-    #     in_channels, out_channels = inputs[-1].shape[-1], y.shape[-1]
-    #     # inputs[-1]=X, which is of #flows,#edges,1
-    #     # in_channels = 1, out_channels=1
-    #     self.generate_weights(in_channels, hidden_layers, out_channels)
+    def setup_scnn(self, model, hidden_layers, k1, k2, shifts, inputs, y, in_axes, train_mask, model_type):
+        """
+        Set up model for training / calling
+        in_axes: the keywords for vmap, for batching 
+        """
+        self.model_type = model_type
+        n_train_samples = sum(train_mask)
+        self.shifts = shifts
+        # set up model for batching
+        self.model = vmap(model, in_axes=in_axes)
+        self.model_single = model
+        # generate weights
+        in_channels, out_channels = inputs[-1].shape[-1], y.shape[-1]
+        # inputs[-1]=X, which is of #flows,#edges,1
+        # in_channels = 1, out_channels=1
+        # for scnn, we need to modify the hidden layers parameter
+        # from e.g., 3_16_3_16 to 1+K_1+K_2,_16_1+K_1+K_2,_16
+        hidden_layers = list((1+k1+k2,hidden_layers[i][1]) for i in range(len(hidden_layers)))
+            
+        self.generate_weights(in_channels, hidden_layers, out_channels)
         
 
     def train(self, inputs, y, train_mask, test_mask, n_nbrs):
@@ -280,7 +285,7 @@ class Scone_GCN():
         :param train_mask: 1-D binary array
         :param hops: number of steps to take before returning prediction todo implement
         """
-        orig_upper_weights = [self.weights[i*3 + 2] for i in range(3)]
+        #orig_upper_weights = [self.weights[i*3 + 2] for i in range(3)]
 
         X = inputs[-1]
         N = X.shape[0]
@@ -310,8 +315,8 @@ class Scone_GCN():
 
         def adam_step(i, opt_state, inputs, y):
             g = grad(self.loss)(self.weights, inputs, y, batch_mask)
-            non_faces.append(onp.mean([onp.mean(onp.abs(g[i*3])) for i in range(3)] + [onp.mean(onp.abs(g[i*3 + 1])) for i in range(3)]))
-            faces.append(onp.mean([onp.mean(onp.abs(g[i*3 + 2])) for i in range(3)]))
+            # non_faces.append(onp.mean([onp.mean(onp.abs(g[i*3])) for i in range(3)] + [onp.mean(onp.abs(g[i*3 + 1])) for i in range(3)]))
+            # faces.append(onp.mean([onp.mean(onp.abs(g[i*3 + 2])) for i in range(3)]))
             return update_fun(i, g, opt_state)
 
         self.adam_state = init_fun(self.weights)

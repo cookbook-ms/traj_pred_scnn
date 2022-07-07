@@ -454,8 +454,7 @@ def to_rnn_format(folder, prefixes_file=None):
     G_undir = nx.relabel_nodes(G_undir, remap)
     E = list(G_undir.edges)
 
-    flows, last_nodes, target_nodes, train_mask, test_mask = [np.load(folder + '/' + name + '.npy') for name in
-                                                              ('flows_in', 'last_nodes', 'target_nodes', 'train_mask',
+    flows, last_nodes, target_nodes, train_mask, test_mask = [np.load(folder + '/' + name + '.npy') for name in ('flows_in', 'last_nodes', 'target_nodes', 'train_mask',
                                                                'test_mask')]
 
     if not prefixes_file:
@@ -516,7 +515,7 @@ def to_rnn_format(folder, prefixes_file=None):
 if __name__ == '__main__':
     folder_suffix = 'working' # make this whatever you want
     generate_dataset(400, 1000, folder_suffix)
-    a = np.load('trajectory_data_1hop_working/B2.npy')
+    a = np.load('trajectory_data_1hop_working/target_nodes.npy')
     print(a.shape)
     DF = pd.DataFrame(np.squeeze(a))
     print(DF)
