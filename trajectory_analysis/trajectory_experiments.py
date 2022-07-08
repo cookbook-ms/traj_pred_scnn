@@ -84,14 +84,14 @@ def hyperparams():
     For hidden_layers, input [(3, 8), (3, 8)] as 3_8_3_8
     """
     args = sys.argv
-    hyperparams = {'model': 'scnn3',
-                   'epochs': 3,
+    hyperparams = {'model': 'scnn2',
+                   'epochs': 20,
                    'learning_rate': 0.001,
                    'weight_decay': 0.00005,
                    'batch_size': 100,
-                   'hidden_layers': [(3, 16), (3, 16), (3, 16)], # where 3 indicates the 1 identity, 1 lower and 1 upper shift
-                   'k1_scnn': 3,
-                   'k2_scnn': 3,
+                   'hidden_layers': [(3, 16), (3, 16), (3, 16)], # where 3 indicates the 1 identity, 1 lower and 1 upper shift # for ebli, replace 3 by 4, for bunch, replace 3 by 7, for scnn, no need to replace
+                   'k1_scnn': 2,
+                   'k2_scnn': 2,
                    'describe': 1,
                    'reverse': 1,
                    'load_data': 1,
@@ -246,23 +246,24 @@ def scnn_func_4(weights, S_lower, S2_lower, S3_lower, S4_lower, S_upper, S2_uppe
     return logits - logsumexp(logits)
 
 # Ebli function
-def ebli_func(weights, S_lower, S_upper, Bcond_func, last_node, flow):
+def ebli_func(weights, S, S2, S3, Bcond_func, last_node, flow):
     """
     Forward pass of the Ebli model with variable number of layers
     note that here 
     S_lower = L1
     S_upper = L1^2
     """
-    n_layers = (len(weights) - 1) / 3
+    n_layers = (len(weights) - 1) / 4
     print('#weights:',len(weights),'#layers:',n_layers)
     assert n_layers % 1 == 0, 'wrong number of weights'
     cur_out = flow
     for i in range(int(n_layers)):
-        cur_out = cur_out @ weights[i * 3] \
-                  + S_lower @ cur_out @ weights[i*3 + 1] \
-                  + S_upper @ cur_out @ weights[i*3 + 2]
+        cur_out = cur_out @ weights[i * 4] \
+                  + S @ cur_out @ weights[i*4 + 1] \
+                  + S2 @ cur_out @ weights[i*4 + 2] \
+                  + S3 @ cur_out @ weights[i*4 + 3]
 
-        cur_out = leaky_relu(cur_out)
+        cur_out = tanh(cur_out)
 
     logits = Bcond_func(last_node) @ cur_out @ weights[-1]
     return logits - logsumexp(logits)
@@ -290,15 +291,11 @@ def bunch_func(weights, S_00, S_10, S_01, S_11, S_21, S_12, S_22, nbrhoods, last
         next_out[2] = S_12 @ cur_out[1] @ weights[i * 7 + 5] \
                    + S_22 @ cur_out[2] @ weights[i * 7 + 6]
 
-
         cur_out = [relu(c) for c in next_out]
 
-
     nodes_out = cur_out[0] # use the last layer output on the node level as the final output 
-
     # values at nbrs of last node
     logits = nodes_out[nbrhoods[last_node]]
-
     return logits - logsumexp(logits)
 
 
@@ -362,7 +359,7 @@ def data_setup(hops=(1,), load=True, folder_suffix='schaub'):
             
         elif HYPERPARAMS['model'] == 'ebli':
             L1 = L1_lower + L1_upper
-            shifts = [L1, L1 @ L1] # L1, L1^2
+            shifts = [L1, L1 @ L1, L1@L1@L1] # L1, L1^2
 
         elif HYPERPARAMS['model'] == 'bunch':
             # S_00, S_01, S_01, S_11, S_21, S_12, S_22
@@ -574,8 +571,12 @@ def train_model():
 
     # load a model from file + train it more
     if HYPERPARAMS['load_model']:
-        scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '.npy', allow_pickle=True)
-        print('load successful')
+        if HYPERPARAMS['regional']:
+            scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '_regional' + '.npy', allow_pickle=True)
+            print('load successful')
+        else:
+            scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '.npy', allow_pickle=True)
+            print('load successful')
         # if HYPERPARAMS['epochs'] != 0:
         #     # train model for additional epochs
         #     scone.train(inputs_1hop, y_1hop, train_mask, test_mask, n_nbrs)
@@ -595,13 +596,17 @@ def train_model():
             os.mkdir('models')
         except:
             pass
-        onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']), scone.weights)
+        if HYPERPARAMS['regional']:
+            onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '_regional', scone.weights)
+        else: 
+            onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']), scone.weights)
 
     # standard experiment
     print('standard test set:')
+    scone.test(inputs_1hop, y_1hop, test_mask, n_nbrs)
+    
     train_2target, test_2target = scone.two_target_accuracy(shifts, inputs_1hop, y_1hop, train_mask, n_nbrs), scone.two_target_accuracy(shifts, inputs_1hop, y_1hop, test_mask, n_nbrs)
 
-    scone.test(inputs_1hop, y_1hop, test_mask, n_nbrs)
     print('2-target accs:', train_2target, test_2target)
 
 
