@@ -574,10 +574,10 @@ def train_model():
     # load a model from file + train it more
     if HYPERPARAMS['load_model']:
         if HYPERPARAMS['regional']:
-            scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '_regional' + '.npy', allow_pickle=True)
+            scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(int(HYPERPARAMS['epochs'])) + '_regional' + '.npy', allow_pickle=True)
             print('load successful')
         else:
-            scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '.npy', allow_pickle=True)
+            scone.weights = onp.load('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(int(HYPERPARAMS['epochs'])) + '.npy', allow_pickle=True)
             print('load successful')
         # if HYPERPARAMS['epochs'] != 0:
         #     # train model for additional epochs
@@ -599,9 +599,9 @@ def train_model():
         except:
             pass
         if HYPERPARAMS['regional']:
-            onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']) + '_regional', scone.weights)
+            onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(int(HYPERPARAMS['epochs'])) + '_regional', scone.weights)
         else: 
-            onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(HYPERPARAMS['epochs']), scone.weights)
+            onp.save('models/' + HYPERPARAMS['model_name'] + '_' + HYPERPARAMS['model'] + '_' + str(int(HYPERPARAMS['epochs'])), scone.weights)
 
     # standard experiment
     print('standard test set:')
