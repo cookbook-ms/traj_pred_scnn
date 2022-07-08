@@ -9,6 +9,7 @@ import numpy as onp
 import jax.numpy as np
 from jax import grad, jit, vmap
 from jax.experimental.optimizers import adam
+import jax.example_libraries.optimizers 
 from treelib import Tree
 import matplotlib.pyplot as plt
 

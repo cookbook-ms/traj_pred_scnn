@@ -84,14 +84,14 @@ def hyperparams():
     For hidden_layers, input [(3, 8), (3, 8)] as 3_8_3_8
     """
     args = sys.argv
-    hyperparams = {'model': 'scnn2',
-                   'epochs': 20,
+    hyperparams = {'model': 'scnn3',
+                   'epochs': 2,
                    'learning_rate': 0.001,
                    'weight_decay': 0.00005,
                    'batch_size': 100,
                    'hidden_layers': [(3, 16), (3, 16), (3, 16)], # where 3 indicates the 1 identity, 1 lower and 1 upper shift # for ebli, replace 3 by 4, for bunch, replace 3 by 7, for scnn, no need to replace
-                   'k1_scnn': 2,
-                   'k2_scnn': 2,
+                   'k1_scnn': 3,
+                   'k2_scnn': 3,
                    'describe': 1,
                    'reverse': 1,
                    'load_data': 1,
@@ -114,6 +114,8 @@ def hyperparams():
                     hyperparams['hidden_layers'] += [(nums[j], nums[j + 1])]
             elif args[i][1:] in ['model_name', 'data_folder_suffix', 'multi_graph', 'model']:
                 hyperparams[args[i][1:]] = str(args[i+1])
+            elif args[i][1:] in ['k1_scnn','k2_scnn']:
+                hyperparams[args[i][1:]] = int(args[i+1])
             else:
                 hyperparams[args[i][1:]] = float(args[i+1])
 
